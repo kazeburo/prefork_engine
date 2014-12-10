@@ -45,9 +45,9 @@ describe PreforkEngine do
         if c == max_workers then
           Process.kill("TERM",ppid)
         end
-        while true
+        100.times {
           sleep 0.3
-        end
+        }
       } # pm.start
     end
     pm.wait_all_children()
