@@ -25,6 +25,7 @@ describe PreforkEngine do
     
     while ! pm.signal_received.match(/^TERM$/)
       pm.start {
+        term_req = 0
         f = open(temp_path, "r+")
         f.flock(File::LOCK_EX)
         c = f.sysread(10)
@@ -40,14 +41,15 @@ describe PreforkEngine do
           f.sysseek(0,0)
           f.syswrite(c.to_s)
           f.flock(File::LOCK_UN)
-          exit!(true)
+          term_req += 1
         })
         if c == max_workers then
+          sleep 1
           Process.kill("TERM",ppid)
         end
-        100.times {
+        while term_req == 0
           sleep 0.3
-        }
+        end
       } # pm.start
     end
     pm.wait_all_children()
