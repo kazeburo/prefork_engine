@@ -37,7 +37,6 @@ describe PreforkEngine do
           term_req = 0
           Signal.trap("TERM", proc {
             term_req += 1
-            puts "#$$ #{term_req}"
           })
           while term_req == 0
             sleep 0.3

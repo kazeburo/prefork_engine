@@ -66,7 +66,7 @@ class PreforkEngine
             Signal.trap("CHLD", 0) #XXX ??
             exit!(true) if @signal_received.size > 0
             block.call
-            self.finish(true)
+            exit!(true)
           end
           # parent
           if @options["after_fork"] then
@@ -109,12 +109,6 @@ class PreforkEngine
     end
     return true
   end #start
-
-  def finish(exit_status)
-    exit_status = true if exit_status == nil
-    raise "finish() shouln't be called within the manager process\n" if @manager_pid == $$
-    exit!(exit_status)
-  end #finish
 
   def signal_all_children(sig)
     @worker_pids.keys.sort.each do |pid|

@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
   spec.email         = ["kazeburo@gmail.com"]
   spec.summary       = %q{a simple prefork server framework}
   spec.description   = %q{a simple prefork server framework. ruby port of perl's Parallel::Prefork}
-  spec.homepage      = ""
+  spec.homepage      = "https://github.com/kazeburo/prefork_engine/"
   spec.license       = "Artistic"
 
   spec.files         = `git ls-files -z`.split("\x0")
