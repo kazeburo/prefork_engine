@@ -44,7 +44,7 @@ describe PreforkEngine do
           term_req += 1
         })
         if c == max_workers then
-          sleep 1
+          sleep 3
           Process.kill("TERM",ppid)
         end
         while term_req == 0
