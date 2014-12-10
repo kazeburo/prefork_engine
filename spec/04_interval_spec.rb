@@ -39,7 +39,7 @@ describe PreforkEngine do
             term_req += 1
           })
           while term_req == 0
-            sleep 0.3
+            sleep 0.01
           end
           temp.close!
         }
