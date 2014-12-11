@@ -22,6 +22,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rake", "~> 10.0"
   spec.add_development_dependency "rspec"
 
-  spec.add_dependency "pico_http_parser", "~> 0.0.3"
   spec.add_dependency "proc-wait3", "~> 1.7.2"
 end
