@@ -158,7 +158,7 @@ module Rack
             if @_is_tcp then
               connection.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
               peer = connection.peeraddr
-              peeraddr = peer[2],
+              peeraddr = peer[2]
               peerport = peer[1].to_s
             end
             proc_req_count += 1
@@ -236,7 +236,7 @@ module Rack
               res_header += k + ": " + vs + "\r\n"
             end
             if !sent_date then
-              res_header += "Date:" + Time.now.httpdate + "\r\n"
+              res_header += "Date: " + Time.now.httpdate + "\r\n"
             end
             if !sent_server then
               res_header += "Server: RubyStarlet\r\n"
