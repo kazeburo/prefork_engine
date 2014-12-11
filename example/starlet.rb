@@ -146,43 +146,41 @@ module Rack
             exit!(true)
           end
         }
-        Signal.trap('PIPE', 'IGNORE')
+        Signal.trap('PIPE', proc { })
         max_reqs = self._calc_reqs_per_child()
         while proc_req_count < max_reqs
           @can_exit = true
           connection = @server.accept
           begin
-            connection.nonblock(true) {
-              peeraddr = nil
-              peerport = 0
-              if @_is_tcp then
-                connection.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
-                peer = connection.peeraddr
-                peeraddr = peer[2],
-                peerport = peer[1].to_s
-              end
-              proc_req_count += 1
-              @_is_deferred_accept = @_using_defer_accept
-              env = {
-                'SERVER_NAME' => @options[:Host],
-                'SERVER_PORT' => @options[:Port].to_s,
-                'REMOTE_ADDR' => peeraddr,
-                'REMOTE_PORT' => peerport,
-                'rack.version' => [0,1],
-                'rack.errors' => STDERR,
-                'rack.multithread' => false,
-                'rack.multiprocess' => false,
-                'rack.run_once' => false,
-                'rack.url_scheme' => 'http'
-              }
-              self.handle_connection(env, connection, app)
+            connection.nonblock = true
+            peeraddr = nil
+            peerport = 0
+            if @_is_tcp then
+              connection.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
+              peer = connection.peeraddr
+              peeraddr = peer[2],
+              peerport = peer[1].to_s
+            end
+            proc_req_count += 1
+            @_is_deferred_accept = @_using_defer_accept
+            env = {
+              'SERVER_NAME' => @options[:Host],
+              'SERVER_PORT' => @options[:Port].to_s,
+              'REMOTE_ADDR' => peeraddr,
+              'REMOTE_PORT' => peerport,
+              'rack.version' => [0,1],
+              'rack.errors' => STDERR,
+              'rack.multithread' => false,
+              'rack.multiprocess' => false,
+              'rack.run_once' => false,
+              'rack.url_scheme' => 'http'
             }
+            self.handle_connection(env, connection, app)
           ensure
             connection.close
           end
         end
       end
-
       def handle_connection(env, connection, app)
         buf = ""
         while true
@@ -222,11 +220,26 @@ module Rack
             end
             status, header, body = app.call(env)
             res_header = "HTTP/1.0 "+status.to_s+" "+Rack::Utils::HTTP_STATUS_CODES[status]+"\r\nConnection: close\r\n"
+            sent_date = false
+            sent_server = false
             header.each do |k,vs|
-              if k.downcase == "connection" then
+              dk = k.downcase
+              if dk == "connection" then
                 next
               end
+              if dk == "date" then
+                sent_date = true
+              end
+              if dk == "server" then
+                sent_server = true
+              end
               res_header += k + ": " + vs + "\r\n"
+            end
+            if !sent_date then
+              res_header += "Date:" + Time.now.httpdate + "\r\n"
+            end
+            if !sent_server then
+              res_header += "Server: RubyStarlet\r\n"
             end
             res_header += "\r\n"
             if body.length == 1 && body[0].bytesize < 40960 then
