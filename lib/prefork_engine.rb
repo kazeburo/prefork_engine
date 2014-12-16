@@ -177,7 +177,8 @@ class PreforkEngine
         return Process.wait3(0)
       end
     rescue Errno::EINTR
-      # nothing
+      # wait for timer thread?
+      sleep 0.02
     rescue Errno::ECHILD
       # nothing
     end
