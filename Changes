@@ -1,3 +1,7 @@
+0.0.3 2014-12-16T12:15:11Z
+
+    - fix signal trap test
+
 0.0.2 2014-12-11T13:22:49Z
 
     - remove unnecessary gems from requires 
