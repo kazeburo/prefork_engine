@@ -1,3 +1,7 @@
+0.0.4 2014-12-16T16:45:52Z
+
+    - sleep after EINTR for waiting for signal handler
+
 0.0.3 2014-12-16T12:15:11Z
 
     - fix signal trap test
