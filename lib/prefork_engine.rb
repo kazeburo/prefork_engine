@@ -24,13 +24,12 @@ class PreforkEngine
     @_no_adjust_until = 0.0
     @in_child = false
     @worker_pids = {}
-    @trap_action = {}
     @options["trap_signals"].each do |k,kv|
-      @trap_action[k] = Signal.trap(k) { |signo|
+      Signal.trap(k) { |signo|
         @signal_received = Signal.signame(signo)
       }
     end
-    @trap_action["CHLD"] = Signal.trap("CHLD") {
+    Signal.trap("CHLD") {
       #do nothing
     }
   end
@@ -42,7 +41,7 @@ class PreforkEngine
     raise "cannot start another process while you are in child process" if @in_child
 
     # main loop
-    while @signal_received.size == 0
+    while @signal_received.length == 0
       action = self._decide_action() if @_no_adjust_until <= Time.now.to_f
       if action > 0 then
         # start a new worker
@@ -61,10 +60,11 @@ class PreforkEngine
           if pid == nil then
             @in_child = true
             @options["trap_signals"].each do |k,kv|
-              Signal.trap(k, 0) #XXX ??
+              ## Signal.trap(k, 0) #XXX in rspec only?
+              Signal.trap(k, "DEFAULT")
             end
-            Signal.trap("CHLD", 0) #XXX ??
-            exit!(true) if @signal_received.size > 0
+            ## Signal.trap("CHLD", 0) #XXX in rspec only?
+            Signal.trap("CHLD", "DEFAULT")
             block.call
             exit!(true)
           end
@@ -75,11 +75,9 @@ class PreforkEngine
           @worker_pids[pid] = @generation
           self._update_spawn_delay(@options["spawn_interval"])
       end
-      if res = self._wait() then
-        exit_pid = res[0]
-        status = res[1]
-        self._on_child_reap(exit_pid, status)
-        if @worker_pids.delete(exit_pid) == @generation && status != 0 then
+      if r = self._wait() then
+        self._on_child_reap(r.pid, r.status)
+        if @worker_pids.delete(r.pid) == @generation && r.status != 0 then
           self._update_spawn_delay(@options["err_respawn_interval"])
         end
       end
@@ -150,9 +148,9 @@ class PreforkEngine
   def wait_all_children
     #XXX todo timeout
     while !@worker_pids.keys.empty?
-      if res = self._wait() then
-        if @worker_pids.delete(res[0]) then
-          self._on_child_reap(res[0],$?.exitstatus)
+      if r = self._wait() then
+        if @worker_pids.delete(r.pid) then
+          self._on_child_reap(r.pid, r.status)
         end
       end
     end

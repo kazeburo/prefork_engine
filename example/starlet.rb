@@ -69,7 +69,6 @@ module Rack
         @server = nil
         @_is_tcp = false
         @_using_defer_accept = false
-
       end
 
       def setup_listener()
