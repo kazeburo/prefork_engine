@@ -24,6 +24,7 @@ class PreforkEngine
     @_no_adjust_until = 0.0
     @in_child = false
     @worker_pids = {}
+    @delayed_task = nil
     @options["trap_signals"].each do |k,kv|
       Signal.trap(k) { |signo|
         @signal_received = Signal.signame(signo)
