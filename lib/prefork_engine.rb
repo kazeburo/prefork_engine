@@ -26,13 +26,13 @@ class PreforkEngine
     @worker_pids = {}
     @delayed_task = nil
     @options["trap_signals"].each do |k,kv|
-      Signal.trap(k) { |signo|
+      Signal.trap(k) do |signo|
         @signal_received = Signal.signame(signo)
-      }
+      end
     end
-    Signal.trap("CHLD") {
+    Signal.trap("CHLD") do
       #do nothing
-    }
+    end
   end
 
   def start(&block)
@@ -44,9 +44,9 @@ class PreforkEngine
     # main loop
     while @signal_received.length == 0
       action = self._decide_action() if @_no_adjust_until <= Time.now.to_f
-      if action > 0 then
+      if action > 0
         # start a new worker
-        if @options["before_fork"] then
+        if @options["before_fork"]
            @options["before_fork"].call(self)
         end
         pid = nil
@@ -54,11 +54,11 @@ class PreforkEngine
           pid = fork
         rescue => e
           # fork failed
-          warn "fork failed:#{e}";
+          warn "fork failed:#{e}"
           self._update_spawn_delay(@options["err_respawn_interval"])
           next
         end
-          if pid == nil then
+          if pid == nil
             @in_child = true
             @options["trap_signals"].each do |k,kv|
               ## Signal.trap(k, 0) #XXX in rspec only?
@@ -70,30 +70,30 @@ class PreforkEngine
             exit!(true)
           end
           # parent
-          if @options["after_fork"] then
+          if @options["after_fork"]
              @options["after_fork"].call(self)
           end
           @worker_pids[pid] = @generation
           self._update_spawn_delay(@options["spawn_interval"])
       end
-      if r = self._wait() then
+      if r = self._wait()
         self._on_child_reap(r.pid, r.status)
-        if @worker_pids.delete(r.pid) == @generation && r.status != 0 then
+        if @worker_pids.delete(r.pid) == @generation && r.status != 0
           self._update_spawn_delay(@options["err_respawn_interval"])
         end
       end
     end
 
     # send signals to workers
-    if action = self._action_for(@signal_received) then
+    if action = self._action_for(@signal_received)
       sig = action[0]
       interval = action[1]
-      if interval > 0 then
+      if interval > 0
         pids = @worker_pids.keys.sort
         @delayed_task = proc {
           pid = pids.shift
           Process.kill(sig, pid)
-          if pids.empty? then
+          if pids.empty?
             @delayed_task = nil
             @delayed_task_at = nil
           else
@@ -125,7 +125,7 @@ class PreforkEngine
   end #_decide_action
 
   def _on_child_reap(pid,status)
-    if @options["on_child_reap"] then
+    if @options["on_child_reap"]
       @options["on_child_reap"].call(pid,status)
     end
   end
@@ -133,7 +133,7 @@ class PreforkEngine
   def _handle_delayed_task
     while true
       return nil if !@delayed_task
-      timeleft = @delayed_task_at - Time.now.to_f;
+      timeleft = @delayed_task_at - Time.now.to_f
       return timeleft if timeleft > 0
       @delayed_task.call
     end
@@ -149,8 +149,8 @@ class PreforkEngine
   def wait_all_children
     #XXX todo timeout
     while !@worker_pids.keys.empty?
-      if r = self._wait() then
-        if @worker_pids.delete(r.pid) then
+      if r = self._wait()
+        if @worker_pids.delete(r.pid)
           self._on_child_reap(r.pid, r.status)
         end
       end
@@ -168,7 +168,7 @@ class PreforkEngine
     delayed_fork_sleep = self._decide_action > 0 ? [@_no_adjust_until - Time.now.to_f,0].max : nil
     sleep_secs = [delayed_task_sleep,delayed_fork_sleep,self._max_wait].select {|v| v != nil}
     begin
-      if sleep_secs.min != nil then
+      if sleep_secs.min != nil
         sleep(sleep_secs.min)
         # nonblock
         return Process.wait3(1)
