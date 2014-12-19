@@ -1,3 +1,7 @@
+0.0.5 2014-12-19T16:39:31Z
+
+    - clean up code
+
 0.0.4 2014-12-16T16:45:52Z
 
     - sleep after EINTR for waiting for signal handler
