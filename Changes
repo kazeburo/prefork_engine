@@ -1,3 +1,7 @@
+0.0.6
+
+    - imprement wait_all_children(timeout)
+
 0.0.5 2014-12-19T16:39:31Z
 
     - clean up code
