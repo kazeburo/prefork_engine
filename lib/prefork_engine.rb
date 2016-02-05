@@ -44,7 +44,8 @@ class PreforkEngine
 
     # main loop
     while @signal_received.length == 0
-      action = self._decide_action() if @_no_adjust_until <= Time.now.to_f
+      action = @_no_adjust_until <= Time.now.to_f ? self._decide_action() : 0
+
       if action > 0
         # start a new worker
         if @options["before_fork"]
@@ -77,7 +78,7 @@ class PreforkEngine
           @worker_pids[pid] = @generation
           self._update_spawn_delay(@options["spawn_interval"])
       end
-      if r = self._wait(action <= 0 ? 1 : 0)
+      if r = self._wait(action <= 0)
         self._on_child_reap(r.pid, r.status)
         if @worker_pids.delete(r.pid) == @generation && r.status != 0
           self._update_spawn_delay(@options["err_respawn_interval"])
@@ -150,7 +151,7 @@ class PreforkEngine
   def wait_all_children(timeout = 0)
     wait_loop = proc {
       while !@worker_pids.keys.empty?
-        if r = self._wait(1)
+        if r = self._wait(true)
           if @worker_pids.delete(r.pid)
             self._on_child_reap(r.pid, r.status)
           end
@@ -182,7 +183,7 @@ class PreforkEngine
     else
       delayed_task_sleep = self._handle_delayed_task()
       delayed_fork_sleep = self._decide_action > 0 ? [@_no_adjust_until - Time.now.to_f,0].max : nil
-      sleep_secs = [delayed_task_sleep,delayed_fork_sleep,self._max_wait].select {|v| v != nil}
+      sleep_secs = [delayed_task_sleep,delayed_fork_sleep,self._max_wait].compact
       begin
         if sleep_secs.min != nil
           sleep(sleep_secs.min)
