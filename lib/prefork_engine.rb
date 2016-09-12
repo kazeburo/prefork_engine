@@ -160,7 +160,7 @@ class PreforkEngine
     }
     if timeout > 0
       begin
-       timeout(timeout){
+       Timeout.timeout(timeout){
          wait_loop.call
        }
      rescue Timeout::Error
